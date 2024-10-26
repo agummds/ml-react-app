@@ -4,19 +4,22 @@ import Header from './components/Header'
 import FileDisplay from './components/FileDisplay'
 import Transcribing from './components/Transcribing'
 import Information from './components/Information'
+import { MessageTypes } from './utils/presets'
+
 
 
 function App() {
   const [file, setFile] = useState(null)
   const [audioStream, setAudioStream] = useState(null)
 
-  const isAudioAvailable = file || audioStream
-
+  
   const [output, setOutput] = useState(null)
   const [downloading, setDownloading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [finished, setFinished] = useState(false)
- 
+  
+  const isAudioAvailable = file || audioStream
+
   function handleAudioReset(){
     setFile(null)
     setAudioStream(null)
@@ -26,7 +29,7 @@ function App() {
 
   useEffect(()=>  {
     if(!worker.current){
-      worker.current = new Woeker(new URL('./utils/whisper.worker.js', import.meta.url), {
+      worker.current = new Worker(new URL('./utils', import.meta.url), {
         type: 'module'
       })
     }
@@ -42,6 +45,7 @@ function App() {
           break;
         case 'RESULT' :
           setOutput(e.data.results)
+          console.log(e.data.results)
           break;
         case 'INFERENCE_DONE' :
           setFinished(true)
@@ -49,57 +53,51 @@ function App() {
           break;
       }
     }
-    worker.current.oddEventListener('message', onMessageReceived)
+    worker.current.addEventListener('message', onMessageReceived)
 
-    return () => worker.current.removerEventListener(
-      'message', onMessageReceived
-    )
+    return () => worker.current.removeEventListener(
+      'message', onMessageReceived)
     })
 
-    async function readAudioForm(file) {
+    async function readAudioFrom(file) {
       const sampling_rate = 16000
-      const audioCTX = new AudioContext({sampleRate:sampling_rate})
+      const audioCTX = new AudioContext({ sampleRate: sampling_rate })
       const response = await file.arrayBuffer()
-      const decoded =  await audioCTX.decodeAudioData(response)
+      const decoded = await audioCTX.decodeAudioData(response)
       const audio = decoded.getChannelData(0)
       return audio
-      
     }
-
+  
     async function handleFormSubmission() {
-      if (!file && !audioStream) {return}
-
-      let audio = await readAudioForm(file ? file : audioStream)
-      const model_name = 'openai/whisper-tiny.en'
-
+      if (!file && !audioStream) { return }
+  
+      let audio = await readAudioFrom(file ? file : audioStream)
+      const model_name = `openai/whisper-tiny.en`
+  
       worker.current.postMessage({
         type: MessageTypes.INFERENCE_REQUEST,
         audio,
         model_name
       })
-      
     }
 
-  return (
-    <div className='flex flex-col p-4 max-w-[1000px] mx-auto w-full'>
-      <section className='min-h-screen flex flex-col'>
-        <Header/>
-        {output ? (
-          <Information/>
-        ) : loading ? (
-          <Transcribing/>
-        ) : isAudioAvailable ? (
-          <FileDisplay handleAudioReset = {handleAudioReset} file={file} audioStream= {setAudioStream} />
-        ) :
-          <HomePage setFile={setFile} setAudioStream={setAudioStream}/>
-      }
-      </section>
-    <h1 className='text-green-400'>Agum Medisa</h1>
-    <footer>
-
-    </footer>
-    </div>
-  )
+    return (
+      <div className='flex flex-col max-w-[1000px] mx-auto w-full'>
+        <section className='min-h-screen flex flex-col'>
+          <Header />
+          {output ? (
+            <Information output={output} finished={finished}/>
+          ) : loading ? (
+            <Transcribing />
+          ) : isAudioAvailable ? (
+            <FileDisplay handleFormSubmission={handleFormSubmission} handleAudioReset={handleAudioReset} file={file} audioStream={setAudioStream} />
+          ) : (
+            <HomePage setFile={setFile} setAudioStream={setAudioStream} />
+          )}
+        </section>
+        <footer></footer>
+      </div>
+    )
 }
 
 export default App
