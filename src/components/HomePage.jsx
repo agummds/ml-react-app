@@ -3,6 +3,7 @@ import React, {useState, useEffect, useRef} from "react";
 export default function HomePage(props){
 
     const {setAudioStream, setFile} = props
+    
     const [recordingStatus, setRecordingStatus] = useState('inactive')
     const [audioChunks, setAudioChunks] = useState([])
     const [duration, setDuration] = useState(0)
