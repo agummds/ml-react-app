@@ -1,4 +1,7 @@
-import { pipeline } from '@xenova/transformers'
+import { pipeline, env } from '@xenova/transformers'
+env.allowLocalModels=false;
+env.useBrowserCache = false;
+
 console.log(typeof pipeline)
 import { MessageTypes } from './presets.js'
 
@@ -11,8 +14,9 @@ class MyTranscriptionPipeline {
 
     static async getInstance(progress_callback = null) {
         if (this.instance === null) {
-            this.instance = await pipeline(MyTranscriptionPipeline.task, MyTranscriptionPipeline.model, { progress_callback })
+            this.instance = await pipeline(MyTranscriptionPipeline.task, null, { progress_callback })
         }
+        console.log('Tipe respons instance:', typeof this.instance);
 
         return this.instance
     }
@@ -32,7 +36,7 @@ async function transcribe(audio) {
 
     try {
         console.log('Getting pipeline instance...');
-        pipeline = await MyTranscriptionPipeline.getInstance(load_model_callback);
+        pipeline = await MyTranscriptionPipeline.getInstance(load_model_callback)
         console.log('Pipeline instance retrieved:', pipeline);
     } catch (err) {
         console.log('Error getting pipeline instance:', err.message);
@@ -43,9 +47,10 @@ async function transcribe(audio) {
 
     const stride_length_s = 5;
 
-    try {
+        const generationTracker = new GenerationTracker(pipeline, stride_length_s)
+
         console.log('Calling pipeline with audio...');
-        await pipelineInstance(audio, {
+        await pipeline(audio, {
             top_k: 0,
             do_sample: false,
             chunk_length: 30,
@@ -54,18 +59,15 @@ async function transcribe(audio) {
             callback_function: generationTracker.callbackFunction.bind(generationTracker),
             chunk_callback: generationTracker.chunkCallback.bind(generationTracker)
         });
-    } catch (error) {
-        console.error('Error calling pipeline:', error);
-    }
+        generationTracker.sendFinalResult();
 
-    generationTracker.sendFinalResult();
 }
-
 
 async function load_model_callback(data) {
     const { status } = data
     if (status === 'progress') {
         const { file, progress, loaded, total } = data
+        // console.log("Checking loaded model data:", data);
         sendDownloadingMessage(file, progress, loaded, total)
     }
 }
@@ -177,3 +179,16 @@ function createPartialResultMessage(result) {
         result
     })
 }
+
+// import { MyTranscriptionPipeline } from 'xenova/transformers';
+
+// async function loadModel() {
+//     try {
+//         const pipeline = await MyTranscriptionPipeline.getInstance();
+//         console.log('Pipeline berhasil didapat:', pipeline);
+//         return pipeline;
+//     } catch (err) {
+//         console.error('Error saat mendapatkan pipeline:', err);
+//     }
+// }
+
