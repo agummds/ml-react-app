@@ -6,7 +6,7 @@ export default function Header(){
           <a href="/">
           <h1 className="font-semibold"><span className='text-red-400 bold'>Trans</span>cribe</h1>
         </a>
-        <a href="/" className='flex items-center gap-1 specialBtn px-4 tect-sm rounded-lg text-red-400'>
+        <a href="/" className='flex items-center gap-1 specialBtn px-4 text-sm rounded-lg text-red-400'>
           <p>New</p>
           <i className="fa-solid fa-plus"></i>
         </a>
