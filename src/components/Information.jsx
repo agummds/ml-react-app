@@ -28,6 +28,8 @@ export default function Information(props){
     function generateTranslation(){
 
     }
+    const textElement = tab === 'transcription' ? output.map(val => val.text) : ''
+
     return(
     <main className='flex-1 p-4 flex flex-col justify-center 
     gap-2 text-center sm:gap-3 md:gap-4 justify-center pb-20 max-w-prose w-full mx-auto'>
@@ -50,9 +52,14 @@ export default function Information(props){
         </div>
         <div className="my-5 flex flex-col">
         {tab === 'Transkrip'?(
-            <Transcription {...props} />
+            <Transcription {...props} textElement = {textElement}/>
         )   : (
-            <Translation {...props} />
+            <Translation {...props} toLanguage = {toLanguage} 
+            translating = {translating} 
+            translation = {translation}
+            setTranslating = {setTranslating}
+            setTranslation = {setTranslation}
+            setToLanguage = {setToLanguage}  />
         )}
         </div>
         <div className="flex items-center gap-10 mx-auto">
