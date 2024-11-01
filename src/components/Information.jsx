@@ -7,7 +7,7 @@ export default function Information(props){
     const [tab, setTab] = useState('Trasnkrip')
     const [translation, setTranslation] = useState(null)
     const [translating, setTranslating] = useState(null)
-    const [toLanguage, setToLanguage] = useState(null)
+    const [toLanguage, setToLanguage] = useState("Select Language")
     console.log (output)
 
     function handleCopy(){
@@ -40,7 +40,7 @@ export default function Information(props){
         rounded-full overflow-hidden items-center">
         <button onClick={()=>{
             setTab('Transkrip')
-        }} className={"px-10 duration-200 py-2 font-medium text-red-400" + (tab === 'Transkrip' ? 
+        }} className={"px-10 duration-200 py-2 font-medium text-red-400" + (tab === 'transcription' ? 
             ' bg-red-400 text-white' : 'text-red-400 hover:text-red-600')}>Transkrip
             </button>
         <button onClick={()=>{
