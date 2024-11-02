@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import Transcription from "./Transcription"
 import Translation from "./Translation"
 
@@ -10,6 +10,40 @@ export default function Information(props){
     const [toLanguage, setToLanguage] = useState("Select Language")
     console.log (output)
 
+    const worker = useRef()
+
+    useEffect (() => {
+        if (!worker.current) {
+            worker.current = new Worker(new URL('../utils/translate.worker.js', import.meta.url), {
+              type: 'module'
+            })
+        }
+        const onMessageReceived = async (e) => {
+            switch (e.data.type) {
+              case 'inisiate':
+                //setDownloading(true)
+                console.log('DOWNLOADING')
+                break;
+              case 'progress':
+                //setLoading(true)
+                console.log('LOADING')
+                break;
+              case 'update':
+                setTranslation(e.data.results)
+                console.log(e.data.results)
+                break;
+              case 'complete':
+                setTranslating(true)
+                console.log("DONE")
+                break;
+            }
+          }
+      
+          worker.current.addEventListener('message', onMessageReceived)
+      
+          return () => worker.current.removeEventListener('message', onMessageReceived)
+    })
+
     function handleCopy(){
         navigator.clipboard.writeText(
 
@@ -17,15 +51,27 @@ export default function Information(props){
     }
     function handleDownload(){
         const element = document.createElement('a')
-        const file = new Blob([],{
+        const file = new Blob([textElement],{
             type: 'text/plain'})
         element.href = URL.createObjectURL(file)
-        element.download(`Transcribe_${new Date().toDateString()}.txt`)
+        element.download = `Transcribe_${new Date().toString()}.txt`
         document.body.appendChild(element)
         element.click()
     }
 
     function generateTranslation(){
+        if (translating || toLanguage === 'Pilih Bahasa'){
+            return
+        }
+
+        setTranslating(true)
+
+        worker.current.postMessage({
+            text: output.map(val => val.text),
+            src_language: 'eng_Latn',
+            tgt_lang : toLanguage
+        })
+
 
     }
     const textElement = tab === 'transcription' ? output.map(val => val.text) : ''
@@ -56,10 +102,12 @@ export default function Information(props){
         )   : (
             <Translation {...props} toLanguage = {toLanguage} 
             translating = {translating} 
-            translation = {translation}
+            //translation = {translation}
+            textElement = {textElement}
             setTranslating = {setTranslating}
             setTranslation = {setTranslation}
-            setToLanguage = {setToLanguage}  />
+            setToLanguage = {setToLanguage} 
+            generateTranslation = {generateTranslation} />
         )}
         </div>
         <div className="flex items-center gap-10 mx-auto">
